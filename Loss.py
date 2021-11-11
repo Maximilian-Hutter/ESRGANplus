@@ -3,11 +3,11 @@ import torch.nn as nn
 from torchvision.model.vgg import vgg19
 import math
 
-class PerceptualLoss(nn.Module):
+class ContentLoss(nn.Module):    # Loss to optimize for Human perception Visual quality
     def __init__(self):
-        super(PerceptualLoss, self).__init__()
+        super(ContentLoss, self).__init__()
 
-        vgg = vgg19(pretrained=True)
+        vgg = vgg19(pretrained=True)    # pretrained vgg 19
         loss_network = nn.Sequential(*list(vgg.features)[:35]).eval
         for param in loss_network.parameters():
             param.requires_grad = False

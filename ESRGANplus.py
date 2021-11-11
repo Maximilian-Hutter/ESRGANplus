@@ -3,12 +3,10 @@ import torch.nn as nn
 from noise_generator import *
 from Models import *
 
-class ESRGANplus(nn.module):
+class ESRGANplus(nn.module):    # generator
     def __init__(self, channels, filters, num_upsample = 2, n_resblock = 16, res_scale=0.2):
         super(ESRGANplus, self).__init__()
-
-        # ResnetBlock = Conv->LReLU, ResnetBlock in for loop Resblock->loop->Resblock->loop->... append 1 layer/block in the end
-
+        
         self.Conv1 = nn.Conv2d(channels, filters, kernel_size=3, stride=1, padding=1)
         
         self.RRDRB = nn.Sequential(torch.add(ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator()) for _ in range(n_resblock))

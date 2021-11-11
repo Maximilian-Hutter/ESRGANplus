@@ -8,6 +8,7 @@ import random
 import os
 import numpy as np
 
+# Normalization parameters for pretrained Pytorch models
 mean = np.array([0.485, 0.456, 0.406])
 std = np.array([0.229, 0.224, 0.225])
 
@@ -20,7 +21,7 @@ class ImageDataset(Dataset):
     def __init__(self, root, hr_shape):
         hr_height, hr_width, = hr_shape
 
-        self.lr_transforms = transforms.Compose(
+        self.lr_transforms = transforms.Compose(    # transform High res image to Low res Image
             [
                 transforms.Resize((hr_height // 4, hr_height // 4), Image.BICUBIC),
                 transforms.ToTensor(),
@@ -35,14 +36,14 @@ class ImageDataset(Dataset):
             ]
         )
 
-        self.files = sorted(glob.glob(root + "/*.*"))
+        self.files = sorted(glob.glob(root + "/*.*")) 
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):   # get images to dataloader
         img = Image.open(self.files[index % len(self.files)])
         img_lr = self.lr_transforms(img)
         img_hr = self.hr_transforms(img)
 
-        return {"lr": img_lr, "hr": img_hr}
+        return {"lr": img_lr, "hr": img_hr} # label low res lr and high res hr images
 
     def __len__(self):
         return len(self.files)

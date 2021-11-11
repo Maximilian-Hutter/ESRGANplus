@@ -3,31 +3,31 @@ import torch.nn as nn
 import torch
 import math
 
-class ResidualDenseResidualBlock(nn.Module):
+class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
     def __init(self,num_DenseBlock, filters, res_scale=0.2, in_features=1):
         super(ResidualDenseResidualBlock, self).__init__()
 
         self.res_scale = res_scale
 
         def block(in_features, non_linearity=True):
-            layers = [nn.Conv2d(in_features, filters, 3, 1, 1, bias=True)]
+            layers = [nn.Conv2d(in_features, filters, 3, 1, 1, bias=True)]  # Denseblock part
             if non_linearity:
                 layers.append(nn.LeakyReLU())
             return nn.Sequential(*layers)
 
         in_features = in_features + num_DenseBlock
 
-        self.block1 = block(in_features=1 * filters)
+        self.block1 = block(in_features=1 * filters)    # Divided to add a Residual in between the Denseblock
         self.block2 = block(in_features=2 * filters)
 
         self.blocks1 = [self.block1, self.block2]
 
-        self.block3 = block(in_features=3 * filters)
+        self.block3 = block(in_features=3 * filters) 
         self.block4 = block(in_features=4 * filters)
 
-        self.blocks2 = [self.block3, self.block4]
+        self.blocks2 = [self.block3, self.block4]   # blocks1 + blocks2 = full denseblock
 
-        self.Conv = block(in_features=5 * filters, non_linearity=False)
+        self.Conv = block(in_features=5 * filters, non_linearity=False) # Output Convolution
 
     def forward(self,x):
         inputs = x
@@ -35,18 +35,18 @@ class ResidualDenseResidualBlock(nn.Module):
             out=block(inputs)
             inputs = torch.cat([inputs, out],1)
 
-        inputs2 = out.mul(self.res_scale) + x
-        residual = inputs2
+        inputs2 = out.mul(self.res_scale) + x   # add residual to blocks1 out
+        residual = inputs2                      # create another residual that is the blocks1 out + x
 
         for block in self.blocks2:
             out=block(inputs2)
             inputs2 = torch.cat([inputs2, out],1)
 
-        out = self.Conv(out.mul(self.res_scale) + residual)
+        out = self.Conv(out.mul(self.res_scale) + residual) # output convolution
 
         return out
 
-class ResidualInResidualDenseResidualBlock(nn.Module):
+class ResidualInResidualDenseResidualBlock(nn.Module):  # Residual around the DenseResidualBlocks
     def __init__(self, filters, res_scale=0.2):
         super(ResidualInResidualDenseResidualBlock, self)
 
@@ -57,7 +57,7 @@ class ResidualInResidualDenseResidualBlock(nn.Module):
     def forward(self,x):
         return self.dense_blocks(x).mul(self.res_scale) + x
         
-class UpSample(nn.Module):
+class UpSample(nn.Module):  # Upsampler
     def __init__(self, num_upsample, n_feat):
         super(UpSample).__init__()
 
@@ -73,26 +73,7 @@ class UpSample(nn.Module):
         out = self.up(x)
         return out
 
-class ResnetBlock(nn.Module):   # resnet block might not be like this
-    def __init__(self, filters, res_scale=0.2):
-        super(ResnetBlock).__init__()
-
-        self.res_scale = res_scale
-        
-
-    def forward(self,x):
-        residual = x
-        x = self.ConvB1(x)
-        x = self.ConvB2(x)
-        x = torch.add(residual,x)
-        residual = x
-        x = self.ConvB3(x)
-        x = self.ConvB4(x)
-        out = torch.add(residual, x)
-
-        return out
-
-class Discriminator(nn.Module):
+class Discriminator(nn.Module): # Discriminator (not part of the Generator)
     def __init(self, input_shape):
         super().__init_()
 

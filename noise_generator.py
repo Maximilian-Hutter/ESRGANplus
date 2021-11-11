@@ -1,11 +1,11 @@
 import torch
-from torch.autograd.variable import Variable    # try one gaussian noise as random and one as a neural net
+from torch.autograd.variable import Variable
 import torch.nn as nn
 
 # sigma = relatie standard deviation
 # is_realtiv_detach = whether to detach the variable before compute
 
-class GaussianNoiseGenerator(nn.module):    # neural net noise
+class GaussianNoiseGenerator(nn.module):    # Gaussian Noise generator
     def __init__(self, input = 0, sigma = 0.1, is_relative_detach=True):
         super(GaussianNoiseGenerator, self).__init__()
 
