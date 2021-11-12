@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchvision.model.vgg import vgg19
+from torchvision.models.vgg import vgg19
 import math
 
 class ContentLoss(nn.Module):    # Loss to optimize for Human perception Visual quality
