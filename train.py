@@ -3,16 +3,15 @@ import torch
 import torch as nn
 from torch.nn.modules.loss import L1Loss
 import torch.optim as optim
-from torch import DataLoader
+from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 import socket
 import argparse
 from prefetch_generator import BackgroundGenerator
-from torchort import ORTModule
+#from torchort import ORTModule
 import tqdm
 import time
 from torch.utils.tensorboard import SummaryWriter
-from torch.cuda import FloatTensor as Tensor
 from torch.autograd import Variable
 
 import ESRGANplus
@@ -35,7 +34,7 @@ parser.add_argument('--gpu_mode', type=bool, default=True)
 parser.add_argument('--threads', type=int, default=24, help='number of threads for data loader to use')
 parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
 parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
-parser.add_argument('--dataset_name', type=str, default='')
+parser.add_argument('--dataset_name', type=str, default='Div2K')
 parser.add_argument('--data_augmentation', type=bool, default=False)
 parser.add_argument('--model_type', type=str, default='ESRGANplus')
 parser.add_argument('--pretrained', type=bool, default=False)
@@ -72,8 +71,8 @@ print('==> Loading Datasets')
 dataloader = DataLoader(ImageDataset("../../data/%s" % opt.dataset_name, hr_shape = hr_shape, num_workers=opt.threds, batch_size=opt.batchSize, shuffle=True)) # opt. still needs to be added
 
 # instantiate model (n_feat = filters)
-Generator = ORTModule(ESRGANplus(opt.channels, filters=opt.filters, num_upsample = opt.upsample, nResnetBlock = opt.nResnetBlock))
-Discriminator = ORTModule(Discriminator(input_shape=(opt.channels, *hr_shape)))
+Generator = ESRGANplus(opt.channels, filters=opt.filters, num_upsample = opt.upsample, nResnetBlock = opt.nResnetBlock)
+Discriminator = Discriminator(input_shape=(opt.channels, *hr_shape))
 
 # Set model to inference mode
 ContentLoss.eval()
@@ -104,6 +103,7 @@ if cuda:
 optimizer_G = optim.Adam(Generator.parameters(), lr=opt.lr, betas=(opt.beta1, opt.b2))  # ESRGANplus / generator optimizer
 optimizer_D = optim.Adam(Discriminator.parameters(),lr=opt.lr, betas=(opt.beta1, opt.b2)) # Discriminator optimizer
 
+
 # load checkpoint/load model
 star_n_iter = 0
 start_epoch = 0
@@ -125,6 +125,9 @@ ContentLoss = torch.nn.DataParallel(Generator, device_ids=gpus_list)
 
 # tensor board
 writer = SummaryWriter()
+
+# define Tensor
+Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
 
 for epoch in range(start_epoch, opt.epoch):
     epoch_loss = 0
