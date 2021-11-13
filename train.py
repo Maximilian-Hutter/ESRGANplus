@@ -34,7 +34,7 @@ parser.add_argument('--gpu_mode', type=bool, default=True)
 parser.add_argument('--threads', type=int, default=24, help='number of threads for data loader to use')
 parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
 parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
-parser.add_argument('--dataset_name', type=str, default='Div2K')
+parser.add_argument('--dataset_name', type=str, default='DIV2K')
 parser.add_argument('--data_augmentation', type=bool, default=False)
 parser.add_argument('--model_type', type=str, default='ESRGANplus')
 parser.add_argument('--pretrained', type=bool, default=False)
@@ -68,10 +68,10 @@ hr_shape = (opt.hr_height, opt.hr_width)
 
 # data loading
 print('==> Loading Datasets')
-dataloader = DataLoader(ImageDataset("../../data/%s" % opt.dataset_name, hr_shape = hr_shape), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads) # opt. still needs to be added
+dataloader = DataLoader(ImageDataset("../../data/%s/train_HR" % opt.dataset_name, hr_shape = hr_shape), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads)
 
 # instantiate model (n_feat = filters)
-Generator = ESRGANplus(opt.channels, filters=opt.filters, num_upsample = opt.upsample, nResnetBlock = opt.nResnetBlock)
+Generator = ESRGANplus(opt.channels, filters=opt.filters, num_upsample = opt.upsample, n_resblock = opt.n_resblock)
 Discriminator = Discriminator(input_shape=(opt.channels, *hr_shape))
 
 # Set model to inference mode

@@ -47,7 +47,7 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
 
 class ResidualInResidualDenseResidualBlock(nn.Module):  # Residual around the DenseResidualBlocks
     def __init__(self, filters, res_scale=0.2):
-        super(ResidualInResidualDenseResidualBlock, self)
+        super(ResidualInResidualDenseResidualBlock, self).__init__()
 
         self.res_scale = res_scale
 
@@ -74,7 +74,7 @@ class UpSample(nn.Module):  # Upsampler
 
 class Discriminator(nn.Module): # Discriminator (not part of the Generator)
     def __init(self, input_shape):
-        super().__init_()
+        super(Discriminator, self).__init__()
 
         self.input_shape = input_shape
         in_channels, in_height, in_width = self.input_shape
