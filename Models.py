@@ -3,7 +3,7 @@ import torch
 import math
 
 class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
-    def __init(self,num_DenseBlock, filters, res_scale=0.2, in_features=1):
+    def __init__(self, filters, res_scale=0.2):
         super(ResidualDenseResidualBlock, self).__init__()
 
         self.res_scale = res_scale
@@ -14,7 +14,6 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
                 layers.append(nn.LeakyReLU())
             return nn.Sequential(*layers)
 
-        in_features = in_features + num_DenseBlock
 
         self.block1 = block(in_features=1 * filters)    # Divided to add a Residual in between the Denseblock
         self.block2 = block(in_features=2 * filters)
@@ -58,22 +57,22 @@ class ResidualInResidualDenseResidualBlock(nn.Module):  # Residual around the De
         
 class UpSample(nn.Module):  # Upsampler
     def __init__(self, num_upsample, n_feat):
-        super(UpSample).__init__()
+        super(UpSample, self).__init__()
 
-        modules = []
+        modules_body = []
         for _ in range(num_upsample):
-            modules.append(nn.Conv2d(n_feat, 4*n_feat, 3, 1, 1, bias=None, activation=None, norm=None))
-            modules.append(torch.nn.LeakyReLU())
-            modules.append(torch.nn.PixelShuffle(2))            
+            modules_body += [nn.Conv2d(n_feat, 4*n_feat, 3, 1, 1, bias=None)]
+            modules_body += [torch.nn.LeakyReLU()]
+            modules_body += [torch.nn.PixelShuffle(2)]      
 
-        self.up = torch.nn.Sequential(*modules)
+        self.up = torch.nn.Sequential(*modules_body)
 
     def forward(self,x):
         out = self.up(x)
         return out
 
 class Discriminator(nn.Module): # Discriminator (not part of the Generator)
-    def __init(self, input_shape):
+    def __init__(self, input_shape):
         super(Discriminator, self).__init__()
 
         self.input_shape = input_shape

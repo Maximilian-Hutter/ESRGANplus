@@ -9,9 +9,13 @@ class ESRGANplus(nn.Module):    # generator
         
         self.Conv1 = nn.Conv2d(channels, filters, kernel_size=3, stride=1, padding=1)
         
-        self.RRDRB = nn.Sequential(torch.add(ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator()) for _ in range(n_resblock))
+        layers = []
+        for _ in range(n_resblock):
+            layers += [ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator()]
 
-        self.Conv2 = nn.Conv2d(filters, filters, kerne_size=3, stride=1, padding=1)
+        self.RRDRB = nn.Sequential(*layers)
+
+        self.Conv2 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
 
         self.Upsample = UpSample(num_upsample, filters)
 

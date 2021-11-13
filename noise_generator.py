@@ -11,7 +11,7 @@ class GaussianNoiseGenerator(nn.Module):    # Gaussian Noise generator
 
         self.sigma = sigma
         self.is_relativ_detach = is_relative_detach
-        self.register_buffer('noise', torch.tensr(0))
+        self.register_buffer('noise', torch.tensor(0))
 
     def forward(self,input):
         if not self.training and self.sigma != 0:
