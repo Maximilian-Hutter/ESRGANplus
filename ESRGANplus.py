@@ -1,9 +1,9 @@
 import torch 
 import torch.nn as nn
 from noise_generator import *
-from Models import *
+from Models import ResidualInResidualDenseResidualBlock, UpSample
 
-class ESRGANplus(nn.module):    # generator
+class ESRGANplus(nn.Module):    # generator
     def __init__(self, channels, filters, num_upsample = 2, n_resblock = 16, res_scale=0.2):
         super(ESRGANplus, self).__init__()
         

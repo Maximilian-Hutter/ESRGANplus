@@ -45,5 +45,5 @@ class ImageDataset(Dataset):
 
         return {"lr": img_lr, "hr": img_hr} # label low res lr and high res hr images
 
-    def __len__(self):
+    def __len__(self):  # if error num_sampler should be positive -> because Dataset not yet Downloaded
         return len(self.files)

@@ -14,7 +14,7 @@ import time
 from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 
-import ESRGANplus
+from ESRGANplus import ESRGANplus
 from Models import Discriminator
 from get_data import ImageDataset
 from Loss import ContentLoss
@@ -68,7 +68,7 @@ hr_shape = (opt.hr_height, opt.hr_width)
 
 # data loading
 print('==> Loading Datasets')
-dataloader = DataLoader(ImageDataset("../../data/%s" % opt.dataset_name, hr_shape = hr_shape, num_workers=opt.threds, batch_size=opt.batchSize, shuffle=True)) # opt. still needs to be added
+dataloader = DataLoader(ImageDataset("../../data/%s" % opt.dataset_name, hr_shape = hr_shape), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads) # opt. still needs to be added
 
 # instantiate model (n_feat = filters)
 Generator = ESRGANplus(opt.channels, filters=opt.filters, num_upsample = opt.upsample, nResnetBlock = opt.nResnetBlock)
