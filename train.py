@@ -13,6 +13,7 @@ import tqdm
 import time
 from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
+import itertools
 
 from ESRGANplus import ESRGANplus
 from Models import Discriminator
@@ -31,7 +32,7 @@ parser.add_argument('--nEpochs', type=int, default=20, help='number of epochs to
 parser.add_argument('--snapshots', type=int, default=10, help='Snapshots')
 parser.add_argument('--lr', type=float, default=2e-4, help='Learning Rate. Default=0.01')
 parser.add_argument('--gpu_mode', type=bool, default=False) ##### cuda default False !!!!
-parser.add_argument('--threads', type=int, default=12, help='number of threads for data loader to use')
+parser.add_argument('--threads', type=int, default=0, help='number of threads for data loader to use')  #### default 0 more than 0 gives if __nam__ ?? '__main__' Error
 parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
 parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
 parser.add_argument('--dataset_name', type=str, default='DIV2K')
@@ -140,11 +141,11 @@ for epoch in range(start_epoch, opt.nEpochs):
     start_time = time.time()
 
 
-    for data in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar
+    for imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar
         # data preparation
 
-        imgs_lr = Variable(data["lr"].type(Tensor)) # get low res image from dataloader
-        imgs_hr = Variable(data["hr"].type(Tensor)) # get high res images from dataloader
+        imgs_lr = Variable(imgs["lr"].type(Tensor)) # get low res images from dataloader
+        imgs_hr = Variable(imgs["hr"].type(Tensor)) # get high res images from dataloader
         valid = Variable(Tensor(np.ones((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
         fake = Variable(Tensor(np.zeros((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
 
