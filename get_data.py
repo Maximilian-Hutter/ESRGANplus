@@ -39,11 +39,11 @@ class ImageDataset(Dataset):
         self.files = sorted(glob.glob(root + "/*.*")) 
 
     def __getitem__(self, index):   # get images to dataloader
-        img = Image.open(self.files[index % len(self.files)])
-        img_lr = self.lr_transforms(img)
-        img_hr = self.hr_transforms(img)
+        imgs = Image.open(self.files[index % len(self.files)])
+        imgs_lr = self.lr_transforms(imgs)
+        imgs_hr = self.hr_transforms(imgs)
 
-        return {"lr": img_lr, "hr": img_hr} # label low res lr and high res hr images
+        return {"lr": imgs_lr, "hr": imgs_hr} # label low res lr and high res hr images
 
     def __len__(self):  # if error num_sampler should be positive -> because Dataset not yet Downloaded
         return len(self.files)
