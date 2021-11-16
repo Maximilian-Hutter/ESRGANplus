@@ -141,7 +141,7 @@ if __name__ == '__main__':
         start_time = time.time()
 
 
-        for imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar
+        for i, imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar # Count, item in enumerate
             # data preparation
 
             imgs_lr = Variable(imgs["lr"].type(Tensor)) # get low res images from dataloader
