@@ -14,14 +14,19 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
                 layers.append(nn.LeakyReLU())
             return nn.Sequential(*layers)
 
+        def block2(in_features, non_linearity=True):
+            layers = [nn.Conv2d(in_features, filters, 3, 1, 1, bias=True)]  # Denseblock part
+            if non_linearity:
+                layers.append(nn.LeakyReLU())
+            return nn.Sequential(*layers)
 
         self.block1 = block(in_features=1 * filters)    # Divided to add a Residual in between the Denseblock
         self.block2 = block(in_features=2 * filters)
 
         self.blocks1 = [self.block1, self.block2]
 
-        self.block3 = block(in_features=3 * filters) 
-        self.block4 = block(in_features=4 * filters)
+        self.block3 = block2(in_features=1 * filters) 
+        self.block4 = block2(in_features=2 * filters)
 
         self.blocks2 = [self.block3, self.block4]   # blocks1 + blocks2 = full denseblock
 
@@ -33,7 +38,7 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
             out=block(inputs)
             inputs = torch.cat([inputs, out],1)
 
-        inputs2 = out.mul(self.res_scale) + x   # add residual to blocks1 out
+        inputs2 = out + x   # add residual to blocks1 out
         residual = inputs2                      # create another residual that is the blocks1 out + x
 
         for block in self.blocks2:

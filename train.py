@@ -55,6 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--mini_batch',type=int, default=16, help='mini batch size')
     parser.add_argument('--sample_interval',type=int, default=100, help='Number of epochs for learning rate decay')
     parser.add_argument('--resume',type=bool, default=False, help='resume training/ load checkpoint')
+    parser.add_argument('--multiGPU',type=bool, default=False, help='set if multiple GPU')
 
     opt = parser.parse_args()
     np.random.seed(opt.seed)    # set seed to default 123 or opt
@@ -122,9 +123,10 @@ if __name__ == '__main__':
         print("last checkpoint restored")
 
     # multiple gpu run
-    Generator = torch.nn.DataParallel(Generator, device_ids=gpus_list)
-    discriminator = torch.nn.DataParallel(Generator, device_ids=gpus_list)
-    feature_extractor = torch.nn.DataParallel(Generator, device_ids=gpus_list)
+    if opt.multiGPU:
+        Generator = torch.nn.DataParallel(Generator, device_ids=gpus_list)
+        discriminator = torch.nn.DataParallel(Generator, device_ids=gpus_list)
+        feature_extractor = torch.nn.DataParallel(Generator, device_ids=gpus_list)
 
     # tensor board
     writer = SummaryWriter()
