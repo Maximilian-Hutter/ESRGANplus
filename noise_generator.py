@@ -6,17 +6,13 @@ import torch.nn as nn
 # is_realtiv_detach = whether to detach the variable before compute
 
 class GaussianNoiseGenerator(nn.Module):    # Gaussian Noise generator
-    def __init__(self, input = 0, sigma = 0.1, is_relative_detach=True):
+    def __init__(self):
         super(GaussianNoiseGenerator, self).__init__()
 
-        self.sigma = sigma
-        self.is_relativ_detach = is_relative_detach
-        self.register_buffer('noise', torch.tensor(0))
+
 
     def forward(self,input):
-        if not self.training and self.sigma != 0:
-            scale = self.sigma * input.detach() if self.is_relative.detach else self.sigma + input
-            self.noise.data.normal_(0,std=self.std)
-            sampled_noise = self.noise.expand(*input.size()).float().normal() * scale
-            x = input + sampled_noise
-        return x
+
+        out = input + (0.1**0.5)*torch.randn(512, device=torch.device('cuda', 0))
+
+        return out

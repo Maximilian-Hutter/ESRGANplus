@@ -30,13 +30,14 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
 
         self.blocks2 = [self.block3, self.block4]   # blocks1 + blocks2 = full denseblock
 
-        self.Conv = block(in_features=5 * filters, non_linearity=False) # Output Convolution
+        self.Conv = block(in_features=1 * filters, non_linearity=False) # Output Convolution
 
     def forward(self,x):
         inputs = x
         for block in self.blocks1:
             out=block(inputs)
             inputs = torch.cat([inputs, out],1)
+
 
         inputs2 = out + x   # add residual to blocks1 out
         residual = inputs2                      # create another residual that is the blocks1 out + x
@@ -45,7 +46,9 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
             out=block(inputs2)
             inputs2 = torch.cat([inputs2, out],1)
 
+
         out = self.Conv(out.mul(self.res_scale) + residual) # output convolution
+
 
         return out
 
@@ -108,4 +111,4 @@ class Discriminator(nn.Module): # Discriminator (not part of the Generator)
         self.model = nn.Sequential(*layers)
 
     def forward(self, img):
-        return self.models(img)
+        return self.model(img)
