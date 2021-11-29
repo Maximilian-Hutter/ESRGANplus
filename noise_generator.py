@@ -12,7 +12,10 @@ class GaussianNoiseGenerator(nn.Module):    # Gaussian Noise generator
 
 
     def forward(self,input):
+        
+        if torch.cuda.is_available():
+            out = input + (0.1**0.5)*torch.randn(512, device=torch.device('cuda', 0))
 
-        out = input + (0.1**0.5)*torch.randn(512, device=torch.device('cuda', 0))
-
+        else:
+            out = input + (0.1**0.5)*torch.randn(512, device = torch.device('cpu',0))
         return out

@@ -14,43 +14,25 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
                 layers.append(nn.LeakyReLU())
             return nn.Sequential(*layers)
 
-        def block2(in_features, non_linearity=True):
-            layers = [nn.Conv2d(in_features, filters, 3, 1, 1, bias=True)]  # Denseblock part
-            if non_linearity:
-                layers.append(nn.LeakyReLU())
-            return nn.Sequential(*layers)
-
         self.block1 = block(in_features=1 * filters)    # Divided to add a Residual in between the Denseblock
         self.block2 = block(in_features=2 * filters)
-
-        self.blocks1 = [self.block1, self.block2]
-
-        self.block3 = block2(in_features=1 * filters) 
-        self.block4 = block2(in_features=2 * filters)
-
-        self.blocks2 = [self.block3, self.block4]   # blocks1 + blocks2 = full denseblock
-
-        self.Conv = block(in_features=1 * filters, non_linearity=False) # Output Convolution
+        self.block3 = block(in_features=3 * filters) 
+        self.block4 = block(in_features=4 * filters)
+        self.block5 = block(in_features=5 * filters, non_linearity=False) # Output Convolution
+        self.blocks = [self.block1, self.block2, self.block3, self.block4,self.block5]
 
     def forward(self,x):
         inputs = x
-        for block in self.blocks1:
+        for block in self.blocks:   # if memory problems split into multiple for loops or no loop at all
+            if block == 2:
+                inputs += x
+                residual = inputs
+            if block == 4:
+                inputs += residual
             out=block(inputs)
             inputs = torch.cat([inputs, out],1)
 
-
-        inputs2 = out + x   # add residual to blocks1 out
-        residual = inputs2                      # create another residual that is the blocks1 out + x
-
-        for block in self.blocks2:
-            out=block(inputs2)
-            inputs2 = torch.cat([inputs2, out],1)
-
-
-        out = self.Conv(out.mul(self.res_scale) + residual) # output convolution
-
-
-        return out
+        return out.mul(self.res_scale) + x
 
 class ResidualInResidualDenseResidualBlock(nn.Module):  # Residual around the DenseResidualBlocks
     def __init__(self, filters, res_scale=0.2):
@@ -67,16 +49,17 @@ class UpSample(nn.Module):  # Upsampler
     def __init__(self, num_upsample, n_feat):
         super(UpSample, self).__init__()
 
+        self.num_upsample = num_upsample
         modules_body = []
-        for _ in range(num_upsample):
-            modules_body += [nn.Conv2d(n_feat, 4*n_feat, 3, 1, 1, bias=None)]
-            modules_body += [torch.nn.LeakyReLU()]
-            modules_body += [torch.nn.PixelShuffle(2)]      
+        modules_body += [nn.Conv2d(n_feat, 4*n_feat, 3, 1, 1, bias=None)]
+        modules_body += [torch.nn.LeakyReLU()]
+        modules_body += [torch.nn.PixelShuffle(2)]      
 
         self.up = torch.nn.Sequential(*modules_body)
 
     def forward(self,x):
-        out = self.up(x)
+        for _ in range(self.num_upsample):
+            out = self.up(x)
         return out
 
 class Discriminator(nn.Module): # Discriminator (not part of the Generator)
@@ -84,7 +67,7 @@ class Discriminator(nn.Module): # Discriminator (not part of the Generator)
         super(Discriminator, self).__init__()
 
         self.input_shape = input_shape
-        in_channels, in_height, in_width = self.input_shape
+        in_channels, in_height, in_width = self.input_shape # might create the content loss img width error
         patch_h, patch_w = int(in_height / 2 ** 4), int(in_width / 2**4)
         self.output_shape = (1,patch_h, patch_w)
 

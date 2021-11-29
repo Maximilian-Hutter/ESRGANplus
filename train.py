@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--nEpochs', type=int, default=2, help='number of epochs to train for')   ### Epochs default 20 !!!!
     parser.add_argument('--snapshots', type=int, default=10, help='Snapshots')
     parser.add_argument('--lr', type=float, default=2e-4, help='Learning Rate. Default=0.01')
-    parser.add_argument('--gpu_mode', type=bool, default=True) 
+    parser.add_argument('--gpu_mode', type=bool, default=False) 
     parser.add_argument('--threads', type=int, default=0, help='number of threads for data loader to use')
     parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
     parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
     parser.add_argument('--hr_height', type=int, default= 2048, help='high res. image height')
     parser.add_argument('--hr_width', type=int, default= 2048, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
-    parser.add_argument('--n_resblock', type=int, default=1, help='number of Res Blocks')
+    parser.add_argument('--n_resblock', type=int, default=10, help='number of Res Blocks')
     parser.add_argument('--perceplambda',type=float, default=1, help='perceptionloss weight')
     parser.add_argument('--contlambda',type=float, default=5e-3, help='contentloss weight')
     parser.add_argument('--advlambda',type=float, default=1e-2, help='adverserialloss weight')
@@ -114,13 +114,9 @@ if __name__ == '__main__':
     start_epoch = 0
     if opt.resume:
         checkpointG = torch.load(opt.save_folder) ## look at what to load
-        checkpointD = torch.load(opt.disc_save_folder) 
-        Generator.load_state_dict(checkpointG['net'])
-        discriminator.load_state_dict(checkpointD['net'])
         start_epoch = checkpointG['epoch']
         start_n_iter = checkpointG['n_iter']
         optimizer_G.load_state_dict(checkpointG['optim'])
-        optimizer_D.load_state_dict(checkpointD['optim'])
         print("last checkpoint restored")
 
     # multiple gpu run
@@ -241,12 +237,6 @@ if __name__ == '__main__':
             model_out_path = opt.save_folder+str(opt.upscale_factor)+'x_'+hostname+opt.model_type+opt.prefix+"_epoch_{}.pth".format(epoch)
             torch.save(Generator.state_dict(), model_out_path)
             print("Checkpoint saved to {}".format(model_out_path))
-
-        def checkpointD(epoch):
-            model_discriminator_out_path = opt.disc_save_folder+str(opt.upscale_factor)+'x_'+hostname+opt.model_type+opt.prefix+"_epoch_{}.pth".format(epoch)
-            torch.save(discriminator.state_dict(), model_discriminator_out_path)
-            print("Checkpoint saved to {}".format(model_discriminator_out_path))
-
     
 
         print('===> Building Model ', opt.model_type)
