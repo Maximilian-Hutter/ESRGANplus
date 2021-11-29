@@ -47,8 +47,8 @@ if __name__ == '__main__':
     parser.add_argument('--beta1',type=float, default=0.9, help='decay of first order momentum of gradient')
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
     parser.add_argument('--hr_height', type=int, default= 2048, help='high res. image height')
-    parser.add_argument('--hr_width', type=int, default= 2048, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
-    parser.add_argument('--n_resblock', type=int, default=10, help='number of Res Blocks')
+    parser.add_argument('--hr_width', type=int, default= 1080, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
+    parser.add_argument('--n_resblock', type=int, default=1, help='number of Res Blocks')
     parser.add_argument('--perceplambda',type=float, default=1, help='perceptionloss weight')
     parser.add_argument('--contlambda',type=float, default=5e-3, help='contentloss weight')
     parser.add_argument('--advlambda',type=float, default=1e-2, help='adverserialloss weight')
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     dataloader = DataLoader(ImageDataset("../../data/%s/train_HR" % opt.dataset_name, hr_shape = hr_shape), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads)
 
     # instantiate model (n_feat = filters)
-    Generator = ESRGANplus(opt.channels, filters=opt.filters, n_resblock = opt.n_resblock, num_upsample = opt.upsample)
+    Generator = ESRGANplus(opt.channels, filters=opt.filters,hr_shape=hr_shape, n_resblock = opt.n_resblock, num_upsample = opt.upsample)
     discriminator = Discriminator(input_shape=(opt.channels, *hr_shape))
     feature_extractor = FeatureExtractor()
 
@@ -166,14 +166,14 @@ if __name__ == '__main__':
 
             gen_img = Generator(imgs_lr)
 
-
             pred_real = discriminator(imgs_hr)
             pred_fake = discriminator(gen_img)
 
+            print("pred Real: {}, pred Fake: {}, gen_img: {}".format(pred_real.size(),pred_fake.size(), gen_img.size()))
 
 
             adverserial_loss = adverserial_criterion(pred_fake - pred_real.mean(0, keepdim=True),valid)
-
+            
             perceptual_loss = perceptual_criterion(gen_img, imgs_hr)
 
             gen_features = feature_extractor(gen_img).detach()

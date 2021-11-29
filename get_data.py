@@ -23,14 +23,14 @@ class ImageDataset(Dataset):
 
         self.lr_transforms = transforms.Compose(    # transform High res image to Low res Image
             [
-                transforms.Resize((hr_height // 4, hr_height // 4), Image.BICUBIC),
+                transforms.Resize((hr_height // 4, hr_width // 4), Image.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
         )
         self.hr_transforms = transforms.Compose(
             [
-                transforms.Resize((hr_height, hr_height), Image.BICUBIC),
+                transforms.Resize((hr_height, hr_width), Image.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
