@@ -4,7 +4,7 @@ from noise_generator import *
 from Models import ResidualInResidualDenseResidualBlock, UpSample
 
 class ESRGANplus(nn.Module):    # generator
-    def __init__(self, channels, filters, hr_shape, n_resblock, num_upsample = 2,  res_scale=0.2):
+    def __init__(self, channels, filters, hr_shape, n_resblock, num_upsample = 4,  res_scale=0.2):
         super(ESRGANplus, self).__init__()
         
         self.n_resblock = n_resblock
@@ -17,7 +17,7 @@ class ESRGANplus(nn.Module):    # generator
         self.Conv2 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
 
         self.Upsample = UpSample(num_upsample, filters)
-
+        
         self.Conv3 = nn.Sequential(nn.Conv2d(filters, filters, kernel_size=3, stride=1,padding=1), nn.LeakyReLU(),nn.Conv2d(filters, channels, kernel_size=3, stride=1,padding=1))
         
 
@@ -28,10 +28,8 @@ class ESRGANplus(nn.Module):    # generator
             print("RRDRB Num: {}".format(_))
             out2 = out1
 
-        print(out2.size())
         out2 = self.Conv2(out2)        
         out = torch.add(out1, out2)
-        print(out.size())
         out = self.Upsample(out)
         print(out.size())
         out = self.Conv3(out)
