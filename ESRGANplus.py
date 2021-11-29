@@ -25,6 +25,7 @@ class ESRGANplus(nn.Module):    # generator
         out1 = self.Conv1(input)
         for _ in range(self.n_resblock):
             out1 = self.RRDRB(out1)
+            print("RRDRB Num: {}".format(_))
             out2 = out1
 
         out2 = self.Conv2(out2)        
