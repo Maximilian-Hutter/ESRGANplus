@@ -9,7 +9,7 @@ class ESRGANplus(nn.Module):    # generator
         
         self.n_resblock = n_resblock
         self.Conv1 = nn.Conv2d(channels, filters, kernel_size=3, stride=1, padding=1)
-        
+
         layers= [ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator(hr_shape)]
 
         self.RRDRB = nn.Sequential(*layers)
@@ -23,6 +23,7 @@ class ESRGANplus(nn.Module):    # generator
 
     def forward(self, input):
         out1 = self.Conv1(input)
+
         for _ in range(self.n_resblock):
             out1 = self.RRDRB(out1)
             print("RRDRB Num: {}".format(_))

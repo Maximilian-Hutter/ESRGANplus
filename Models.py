@@ -3,10 +3,11 @@ import torch
 import math
 
 class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
-    def __init__(self, filters, res_scale=0.2):
+    def __init__(self, filters, res_scale=0.2, NetType = 'ESRGAN'):
         super(ResidualDenseResidualBlock, self).__init__()
 
         self.res_scale = res_scale
+        self.NetType = NetType
 
         def block(in_features, non_linearity=True):
             layers = [nn.Conv2d(in_features, filters, 3, 1, 1, bias=True)]  # Denseblock part
@@ -23,14 +24,20 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
 
     def forward(self,x):
         inputs = x
-        for block in self.blocks:   # if memory problems split into multiple for loops or no loop at all
-            if block == 2:
-                inputs += x
-                residual = inputs
-            if block == 4:
-                inputs += residual
-            out=block(inputs)
-            inputs = torch.cat([inputs, out],1)
+
+        if(self.NetType == 'ESRGANplus'):
+            for block in self.blocks:   # if memory problems split into multiple for loops or no loop at all
+                if block == 2:
+                    inputs += x
+                    residual = inputs
+                if block == 4:
+                    inputs += residual
+                out=block(inputs)
+                inputs = torch.cat([inputs, out],1)
+        if(self.NetType == 'ESRGAN'):
+            for block in self.blocks:
+                out=block(inputs)
+                inputs = torch.cat([inputs,out],1)
 
         return out.mul(self.res_scale) + x
 

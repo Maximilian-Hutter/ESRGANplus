@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--nEpochs', type=int, default=2, help='number of epochs to train for')   ### Epochs default 20 !!!!
     parser.add_argument('--snapshots', type=int, default=10, help='Snapshots')
     parser.add_argument('--lr', type=float, default=2e-4, help='Learning Rate. Default=0.01')
-    parser.add_argument('--gpu_mode', type=bool, default=True) 
+    parser.add_argument('--gpu_mode', type=bool, default=False) 
     parser.add_argument('--threads', type=int, default=0, help='number of threads for data loader to use')
     parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
     parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
     parser.add_argument('--hr_height', type=int, default= 2048, help='high res. image height')
     parser.add_argument('--hr_width', type=int, default= 1080, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
-    parser.add_argument('--n_resblock', type=int, default=1, help='number of Res Blocks')
+    parser.add_argument('--n_resblock', type=int, default=10, help='number of Res Blocks')
     parser.add_argument('--perceplambda',type=float, default=1, help='perceptionloss weight')
     parser.add_argument('--contlambda',type=float, default=5e-3, help='contentloss weight')
     parser.add_argument('--advlambda',type=float, default=1e-2, help='adverserialloss weight')
