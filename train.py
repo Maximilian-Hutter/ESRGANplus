@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
     parser.add_argument('--hr_height', type=int, default= 2048, help='high res. image height')
     parser.add_argument('--hr_width', type=int, default= 1080, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
-    parser.add_argument('--n_resblock', type=int, default=10, help='number of Res Blocks')
+    parser.add_argument('--n_resblock', type=int, default=1, help='number of Res Blocks')
     parser.add_argument('--perceplambda',type=float, default=1, help='perceptionloss weight')
     parser.add_argument('--contlambda',type=float, default=5e-3, help='contentloss weight')
     parser.add_argument('--advlambda',type=float, default=1e-2, help='adverserialloss weight')

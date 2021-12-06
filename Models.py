@@ -42,15 +42,19 @@ class ResidualDenseResidualBlock(nn.Module):    # Residual Element in DenseBlock
         return out.mul(self.res_scale) + x
 
 class ResidualInResidualDenseResidualBlock(nn.Module):  # Residual around the DenseResidualBlocks
-    def __init__(self, filters, res_scale=0.2):
+    def __init__(self, filters, res_scale=0.2,num_DenseBlocks = 3):
         super(ResidualInResidualDenseResidualBlock, self).__init__()
 
         self.res_scale = res_scale
+        self.num_DenseBlocks = num_DenseBlocks
 
-        self.dense_blocks = nn.Sequential(ResidualDenseResidualBlock(filters), ResidualDenseResidualBlock(filters), ResidualDenseResidualBlock(filters))
-        
+        self.dense_block = ResidualDenseResidualBlock(filters)
+
     def forward(self,x):
-        return self.dense_blocks(x).mul(self.res_scale) + x
+        for _ in range(self.num_DenseBlocks):
+            x = self.dense_block(x)
+            out = x
+        return out.mul(self.res_scale) + x
         
 class UpSample(nn.Module):  # Upsampler
     def __init__(self, num_upsample, filters):

@@ -2,6 +2,7 @@ from numpy.random.mtrand import random
 from torch.utils.data import Dataset
 from PIL import Image
 import torchvision.transforms as transforms
+from torchvision.transforms import InterpolationMode
 import torch
 import glob
 import random
@@ -23,14 +24,14 @@ class ImageDataset(Dataset):
 
         self.lr_transforms = transforms.Compose(    # transform High res image to Low res Image
             [
-                transforms.Resize((hr_height // 4, hr_width // 4), Image.BICUBIC),
+                transforms.Resize((hr_height // 4, hr_width // 4), InterpolationMode.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
         )
         self.hr_transforms = transforms.Compose(
             [
-                transforms.Resize((hr_height, hr_width), Image.BICUBIC),
+                transforms.Resize((hr_height, hr_width), InterpolationMode.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
