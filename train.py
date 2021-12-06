@@ -8,13 +8,14 @@ import torch.backends.cudnn as cudnn
 import socket
 import argparse
 from prefetch_generator import BackgroundGenerator
-#from torchort import ORTModule
+from torchort import ORTModule
 import tqdm
 import time
 #from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 import itertools
 import os
+
 
 from ESRGANplus import ESRGANplus
 from Models import Discriminator
@@ -79,6 +80,8 @@ if __name__ == '__main__':
     discriminator = Discriminator(input_shape=(opt.channels, *hr_shape))
     feature_extractor = FeatureExtractor()
 
+    #init ORTModule
+    Generator = ORTModule(Generator)
     # Set model to inference mode
     feature_extractor.eval()
 
