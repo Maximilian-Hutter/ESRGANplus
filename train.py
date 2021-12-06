@@ -15,6 +15,7 @@ import time
 from torch.autograd import Variable
 import itertools
 import os
+import deepspeed
 
 from ESRGANplus import ESRGANplus
 from Models import Discriminator
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--sample_interval',type=int, default=100, help='Number of epochs for learning rate decay')
     parser.add_argument('--resume',type=bool, default=False, help='resume training/ load checkpoint')
     parser.add_argument('--multiGPU',type=bool, default=False, help='set if multiple GPU')
-
+    parser = deepspeed.add_config_arguments(parser)
     opt = parser.parse_args()
     np.random.seed(opt.seed)    # set seed to default 123 or opt
     torch.manual_seed(opt.seed)
@@ -81,6 +82,11 @@ if __name__ == '__main__':
 
     # Set model to inference mode
     feature_extractor.eval()
+    
+    # init Deepspeed
+    parameters = filter(lambda p: p.requires_grad,Generator.parameters())
+
+    model_engine, optimizer, trainloader, _ = deepspeed.initialize(args=opt, model = Generator, model_parameters = parameters, training_data=dataloader)
 
     # loss
     adverserial_criterion = torch.nn.BCEWithLogitsLoss()
@@ -142,11 +148,11 @@ if __name__ == '__main__':
         start_time = time.time()
 
 
-        for i, imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar # Count, item in enumerate
+        for i, imgs in enumerate(BackgroundGenerator(trainloader)):   #  for data in pbar # Count, item in enumerate
             # data preparation
 
-            imgs_lr = Variable(imgs["lr"].type(Tensor)) # get low res images from dataloader
-            imgs_hr = Variable(imgs["hr"].type(Tensor)) # get high res images from dataloader
+            imgs_lr = Variable(imgs["lr"].type(Tensor)).to(model_engine.device) # get low res images from dataloader
+            imgs_hr = Variable(imgs["hr"].type(Tensor)).to(model_engine.device) # get high res images from dataloader
             valid = Variable(Tensor(np.ones((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
             fake = Variable(Tensor(np.zeros((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
 
@@ -161,10 +167,9 @@ if __name__ == '__main__':
             overall_process_time = prepare_time
 
             #train generator  
-            optimizer_G.zero_grad()
 
 
-            gen_img = Generator(imgs_lr)
+            gen_img = model_engine(imgs_lr)
 
             pred_real = discriminator(imgs_hr)
             pred_fake = discriminator(gen_img)
