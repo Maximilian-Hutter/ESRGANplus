@@ -8,7 +8,7 @@ import torch.backends.cudnn as cudnn
 import socket
 import argparse
 from prefetch_generator import BackgroundGenerator
-from torchort import ORTModule
+#from torchort import ORTModule
 import tqdm
 import time
 #from torch.utils.tensorboard import SummaryWriter
@@ -29,15 +29,15 @@ if __name__ == '__main__':
     parser.add_argument('--upsample', type=int, default=2, help="super resolution upscale factor")
     parser.add_argument('--batchSize', type=int, default=1, help='training batch size')
     parser.add_argument('--testBatchSize', type=int, default=1, help='testing batch size')
-    parser.add_argument('--start_epoch', type=int, default=1, help='Starting epoch for continuing training')
-    parser.add_argument('--nEpochs', type=int, default=2, help='number of epochs to train for')   ### Epochs default 20 !!!!
+    parser.add_argument('--start_epoch', type=int, default=0, help='Starting epoch for continuing training')
+    parser.add_argument('--nEpochs', type=int, default=20, help='number of epochs to train for')   ### Epochs default 20 !!!!
     parser.add_argument('--snapshots', type=int, default=10, help='Snapshots')
     parser.add_argument('--lr', type=float, default=2e-4, help='Learning Rate. Default=0.01')
     parser.add_argument('--gpu_mode', type=bool, default=False) 
     parser.add_argument('--threads', type=int, default=0, help='number of threads for data loader to use')
     parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
     parser.add_argument('--gpus', default=1, type=int, help='number of gpu')
-    parser.add_argument('--dataset_name', type=str, default='DIV2K')
+    parser.add_argument('--dataset_name', type=str, default='BSDS300')
     parser.add_argument('--data_augmentation', type=bool, default=False) 
     parser.add_argument('--model_type', type=str, default='ESRGANplus')
     parser.add_argument('--pretrained', type=bool, default=False)
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     parser.add_argument('--channels',type=int, default=3, help='number of channels R,G,B for img / number of input dimensions 3 times 2dConv for img')
     parser.add_argument('--beta1',type=float, default=0.9, help='decay of first order momentum of gradient')
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
-    parser.add_argument('--hr_height', type=int, default= 2048, help='high res. image height')
-    parser.add_argument('--hr_width', type=int, default= 1080, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
-    parser.add_argument('--n_resblock', type=int, default=1, help='number of Res Blocks')
+    parser.add_argument('--hr_height', type=int, default= 320, help='high res. image height')
+    parser.add_argument('--hr_width', type=int, default= 480, help='high res. image width')    # input width default 1080 gives problems with contentcriterion
+    parser.add_argument('--n_resblock', type=int, default=5, help='number of Res Blocks')
     parser.add_argument('--perceplambda',type=float, default=1, help='perceptionloss weight')
     parser.add_argument('--contlambda',type=float, default=5e-3, help='contentloss weight')
     parser.add_argument('--advlambda',type=float, default=1e-2, help='adverserialloss weight')
@@ -81,10 +81,14 @@ if __name__ == '__main__':
     feature_extractor = FeatureExtractor()
 
     #init ORTModule
-    Generator = ORTModule(Generator)
+    #Generator = ORTModule(Generator)
     # Set model to inference mode
     feature_extractor.eval()
 
+    pytorch_disc_params = sum(p.numel() for p in discriminator.parameters())
+    pytorch_feat_params = sum(p.numel() for p in feature_extractor.parameters())
+    pytorch_generator_params = sum(p.numel() for p in Generator.parameters())
+    print("Number of disc Params: {},Number of feat Params: {}, Number of Gen Params:{}".format(pytorch_disc_params,pytorch_feat_params, pytorch_generator_params))
     # loss
     adverserial_criterion = torch.nn.BCEWithLogitsLoss()
     perceptual_criterion = L1Loss()
@@ -122,6 +126,11 @@ if __name__ == '__main__':
         optimizer_G.load_state_dict(checkpointG['optim'])
         print("last checkpoint restored")
 
+    def checkpointG(epoch):
+        model_out_path = opt.save_folder+str(opt.upsample)+'x_'+opt.model_type+opt.prefix+"_epoch_{}.pth".format(epoch)
+        torch.save(Generator.state_dict(), model_out_path)
+        print("Checkpoint saved to {}".format(model_out_path))
+
     # multiple gpu run
     if opt.multiGPU:
         Generator = torch.nn.DataParallel(Generator, device_ids=gpus_list)
@@ -139,10 +148,10 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, opt.nEpochs):
         epoch_loss = 0
         Generator.train()
+        start_time = time.time()
 
         # prefetch generator and tqdm for iterating trough data
         #pbar = tqdm(enumerate(BackgroundGenerator(dataloader,1)), total = len(dataloader)),
-        start_time = time.time()
 
 
         for i, imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar # Count, item in enumerate
@@ -160,8 +169,7 @@ if __name__ == '__main__':
 
 
             # keep track of prepare time
-            prepare_time = start_time-time.time()
-            overall_process_time = prepare_time
+            prepare_time = time.time() - start_time
 
             #train generator  
             optimizer_G.zero_grad()
@@ -172,7 +180,7 @@ if __name__ == '__main__':
             pred_real = discriminator(imgs_hr)
             pred_fake = discriminator(gen_img)
 
-            print("pred Real: {}, pred Fake: {}, gen_img: {}, imgs_hr: {}".format(pred_real.size(),pred_fake.size(), gen_img.size(), imgs_hr.size()))
+            #print("valid: {} pred Real: {}, pred Fake: {}, gen_img: {}, imgs_hr: {}".format(valid.size(), pred_real.size(),pred_fake.size(), gen_img.size(), imgs_hr.size()))
 
 
             adverserial_loss = adverserial_criterion(pred_fake - pred_real.mean(0, keepdim=True),valid)
@@ -208,45 +216,38 @@ if __name__ == '__main__':
             #writer.add_scalar()
 
             #compute time and compute efficiency and print information
-            process_time = time.time()-prepare_time
-            overall_process_time += process_time
-            print("process time: {}, Number of Iteration {}/{}".format(overall_process_time,i , len(dataloader)))
+            process_time = time.time() - start_time
+            print("process time: {}, Number of Iteration {}/{}".format(process_time,i , (len(dataloader)-1)))
             #pbar.set_description("Compute efficiency. {:.2f}, epoch: {}/{}".format(process_time/(process_time+prepare_time),epoch, opt.epoch))
             start_time = time.time()
 
             
-            # learning rate is delayed
-            if (epoch+1) % opt.sample_interval == 0:
-                for param_group in optimizer_G.param_groups:
-                    param_group['lr'] /= 10.0
-                print('Learning rate decay: lr={}'.format(optimizer_G.param_groups[0]['lr']))
-                for param_group in optimizer_D.param_groups:
-                    param_group['lr'] /= 10.0
-                print('Learning rate decay: lr={}'.format(optimizer_D.param_groups[0]['lr']))
+        # learning rate is delayed
+        if (epoch+1) % opt.sample_interval == 0:
+            for param_group in optimizer_G.param_groups:
+                param_group['lr'] /= 10.0
+            print('Learning rate decay: lr={}'.format(optimizer_G.param_groups[0]['lr']))
+            for param_group in optimizer_D.param_groups:
+                param_group['lr'] /= 10.0
+            print('Learning rate decay: lr={}'.format(optimizer_D.param_groups[0]['lr']))
 
-            if (epoch+1) % (opt.snapshots) == 0:
-                checkpointG(epoch)
+        if (epoch+1) % (opt.snapshots) == 0:
+            checkpointG(epoch)
 
         print("===> Epoch {} Complete: Avg. loss: {:.4f}".format(epoch, epoch_loss / len(dataloader)))
 
-        def print_network(net):
-            num_params = 0
-            for param in net.parameters():
-                num_params += param.numel()
-            print(net)
-            print('Total number of parameters: %d' % num_params)
+    def print_network(net):
+        num_params = 0
+        for param in net.parameters():
+            num_params += param.numel()
+        print(net)
+        print('Total number of parameters: %d' % num_params)
 
-        def checkpointG(epoch):
-            model_out_path = opt.save_folder+str(opt.upscale_factor)+'x_'+hostname+opt.model_type+opt.prefix+"_epoch_{}.pth".format(epoch)
-            torch.save(Generator.state_dict(), model_out_path)
-            print("Checkpoint saved to {}".format(model_out_path))
-    
-
-        print('===> Building Model ', opt.model_type)
-        if opt.model_type == 'ESRGANplus':
-            Net = ESRGANplus()
+    print('===> Building Model ', opt.model_type)
+    if opt.model_type == 'ESRGANplus':
+        Net = Generator
 
 
-        print('----------------Network architecture----------------')
-        print_network(Net)
-        print('----------------------------------------------------')
+    print('----------------Network architecture----------------')
+    print_network(Net)
+    print('----------------------------------------------------')

@@ -69,12 +69,12 @@ class UpSample(nn.Module):  # Upsampler
         self.up = torch.nn.Sequential(*modules_body)
 
     def forward(self,x):
-        print(x.size())
+        #print(x.size())
         for _ in range(self.num_upsample):
             x = self.up(x)
             out = x
 
-            print(out.size())
+            #print(out.size())
         return out
 
 class Discriminator(nn.Module): # Discriminator (not part of the Generator)

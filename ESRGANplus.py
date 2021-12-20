@@ -26,13 +26,13 @@ class ESRGANplus(nn.Module):    # generator
 
         for _ in range(self.n_resblock):
             out1 = self.RRDRB(out1)
-            print("RRDRB Num: {}".format(_))
+            #print("RRDRB Num: {}".format(_))
             out2 = out1
 
         out2 = self.Conv2(out2)        
         out = torch.add(out1, out2)
         out = self.Upsample(out)
-        print(out.size())
+        #print(out.size())
         out = self.Conv3(out)
 
         return out
