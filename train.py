@@ -9,12 +9,13 @@ import socket
 import argparse
 from prefetch_generator import BackgroundGenerator
 #from torchort import ORTModule
-import tqdm
+#from tqdm import tqdm as pbar
 import time
-#from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 import itertools
 import os
+import logging
 
 
 from ESRGANplus import ESRGANplus
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--upsample', type=int, default=2, help="super resolution upscale factor")
     parser.add_argument('--batchSize', type=int, default=1, help='training batch size')
     parser.add_argument('--testBatchSize', type=int, default=1, help='testing batch size')
-    parser.add_argument('--start_epoch', type=int, default=0, help='Starting epoch for continuing training')
+    parser.add_argument('--start_epoch', type=int, default=1, help='Starting epoch for continuing training')
     parser.add_argument('--nEpochs', type=int, default=100, help='number of epochs to train for')   ### Epochs default 20 !!!!
     parser.add_argument('--snapshots', type=int, default=10, help='Snapshots')
     parser.add_argument('--lr', type=float, default=2e-4, help='Learning Rate. Default=0.01')
@@ -138,7 +139,7 @@ if __name__ == '__main__':
         feature_extractor = torch.nn.DataParallel(Generator, device_ids=gpus_list)
 
     # tensor board
-    #writer = SummaryWriter()
+    writer = SummaryWriter()
 
     # define Tensor
     Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
@@ -151,17 +152,18 @@ if __name__ == '__main__':
         start_time = time.time()
 
         # prefetch generator and tqdm for iterating trough data
-        #pbar = tqdm(enumerate(BackgroundGenerator(dataloader,1)), total = len(dataloader)),
+        
 
 
         for i, imgs in enumerate(BackgroundGenerator(dataloader,1)):   #  for data in pbar # Count, item in enumerate
             # data preparation
-
+            #pbar(i, len(dataloader))
             imgs_lr = Variable(imgs["lr"].type(Tensor)) # get low res images from dataloader
             imgs_hr = Variable(imgs["hr"].type(Tensor)) # get high res images from dataloader
             valid = Variable(Tensor(np.ones((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
             fake = Variable(Tensor(np.zeros((imgs_lr.size(0), *discriminator.output_shape))), requires_grad=False)
 
+            correct = 0
 
             if cuda:    # put variables to gpu
                 imgs_lr = imgs_lr.to(gpus_list[0])
@@ -207,13 +209,13 @@ if __name__ == '__main__':
             
             epoch_loss += discriminatorloss.data
             Loss = Generatorloss + discriminatorloss
+            correct += (gen_img == imgs_hr).float().sum()
             Loss.backward()
             optimizer_G.step()
             optimizer_D.step()
 
-
             # update tensorboard
-            #writer.add_scalar()
+
 
             #compute time and compute efficiency and print information
             process_time = time.time() - start_time
@@ -233,8 +235,10 @@ if __name__ == '__main__':
 
         if (epoch+1) % (opt.snapshots) == 0:
             checkpointG(epoch)
-
-        print("===> Epoch {} Complete: Avg. loss: {:.4f}".format(epoch, epoch_loss / len(dataloader)))
+        Accuracy = 100*correct / len(dataloader)
+        writer.add_scalar('loss', Loss)
+        writer.add_scalar('accuracy',Accuracy)
+        print("===> Epoch {} Complete: Avg. loss: {:.4f}".format(epoch, ((epoch_loss/2) / len(dataloader))))
 
     def print_network(net):
         num_params = 0
