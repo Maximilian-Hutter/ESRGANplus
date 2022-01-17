@@ -44,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrained', type=bool, default=False)
     parser.add_argument('--save_folder', default='weights/', help='Location to save checkpoint models')
     parser.add_argument('--disc_save_folder',type=str, default='weights/', help='Location to save Discriminator')
-    parser.add_argument('--prefix', default='F7', help='Location to save checkpoint models')
+    parser.add_argument('--prefix', default='', help='Location to save checkpoint models')
     parser.add_argument('--channels',type=int, default=3, help='number of channels R,G,B for img / number of input dimensions 3 times 2dConv for img')
     parser.add_argument('--beta1',type=float, default=0.9, help='decay of first order momentum of gradient')
     parser.add_argument('--beta2',type=float, default=0.999, help='decay of first order momentum of gradient')
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--sample_interval',type=int, default=100, help='Number of epochs for learning rate decay')
     parser.add_argument('--resume',type=bool, default=False, help='resume training/ load checkpoint')
     parser.add_argument('--multiGPU',type=bool, default=False, help='set if multiple GPU')
-
+ 
     opt = parser.parse_args()
     np.random.seed(opt.seed)    # set seed to default 123 or opt
     torch.manual_seed(opt.seed)
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         print("last checkpoint restored")
 
     def checkpointG(epoch):
-        model_out_path = opt.save_folder+str(opt.upsample)+'x_'+opt.model_type+opt.prefix+"_epoch_{}.pth".format(epoch)
+        model_out_path = opt.save_folder+str(opt.upsample)+'x_'+opt.model_type+"_epoch_{}.pth".format(epoch)
         torch.save(Generator.state_dict(), model_out_path)
         print("Checkpoint saved to {}".format(model_out_path))
 
