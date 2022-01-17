@@ -74,10 +74,10 @@ if __name__ == '__main__':
 
     # data loading
     print('==> Loading Datasets')
-    dataloader = DataLoader(ImageDataset("../../data/%s/train_HR" % opt.dataset_name, hr_shape = hr_shape), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads)
+    dataloader = DataLoader(ImageDataset("../../data/%s/train_HR" % opt.dataset_name, hr_shape = hr_shape, upsample = opt.upsample), batch_size=opt.batchSize, shuffle=True, num_workers=opt.threads)
 
     # instantiate model (n_feat = filters)
-    Generator = ESRGANplus(opt.channels, filters=opt.filters,hr_shape=hr_shape, n_resblock = opt.n_resblock, num_upsample = opt.upsample)
+    Generator = ESRGANplus(opt.channels, filters=opt.filters,hr_shape=hr_shape, n_resblock = opt.n_resblock, upsample = opt.upsample)
     discriminator = Discriminator(input_shape=(opt.channels, *hr_shape))
     feature_extractor = FeatureExtractor()
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         print("last checkpoint restored")
 
     def checkpointG(epoch):
-        model_out_path = opt.save_folder+str(opt.upsample)+'x_'+opt.model_type+"_epoch_{}.pth".format(epoch)
+        model_out_path = opt.save_folder+str(opt.upsample)+'x_'+opt.model_type+".pth".format(epoch)
         torch.save(Generator.state_dict(), model_out_path)
         print("Checkpoint saved to {}".format(model_out_path))
 

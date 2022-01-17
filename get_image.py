@@ -1,0 +1,3 @@
+def getImage():
+    
+    return Imagepath

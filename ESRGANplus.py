@@ -4,19 +4,19 @@ from noise_generator import *
 from Models import ResidualInResidualDenseResidualBlock, UpSample
 
 class ESRGANplus(nn.Module):    # generator
-    def __init__(self, channels, filters, hr_shape, n_resblock, num_upsample = 4,  res_scale=0.2):
+    def __init__(self, channels, filters, hr_shape, n_resblock, upsample,  res_scale=0.2):
         super(ESRGANplus, self).__init__()
         
         self.n_resblock = n_resblock
         self.Conv1 = nn.Conv2d(channels, filters, kernel_size=3, stride=1, padding=1)
 
-        layers= [ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator(hr_shape)]
+        layers= [ResidualInResidualDenseResidualBlock(filters),GaussianNoiseGenerator(hr_shape,upsample)]
 
         self.RRDRB = nn.Sequential(*layers)
 
         self.Conv2 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
 
-        self.Upsample = UpSample(num_upsample, filters)
+        self.Upsample = UpSample(upsample, filters)
         
         self.Conv3 = nn.Sequential(nn.Conv2d(filters, filters, kernel_size=3, stride=1,padding=1), nn.LeakyReLU(),nn.Conv2d(filters, channels, kernel_size=3, stride=1,padding=1))
         

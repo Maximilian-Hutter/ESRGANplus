@@ -19,12 +19,12 @@ def denormalize(tensors):
         tensors[:, c].mul(std[c]).add_(mean[c])
     return torch.clamp(tensors, 0, 255)
 class ImageDataset(Dataset):
-    def __init__(self, root, hr_shape):
+    def __init__(self, root, hr_shape, upsample):
         hr_height, hr_width, = hr_shape
 
         self.lr_transforms = transforms.Compose(    # transform High res image to Low res Image
             [
-                transforms.Resize((hr_height // 4, hr_width // 4), InterpolationMode.BICUBIC),
+                transforms.Resize((hr_height // upsample, hr_width // upsample), InterpolationMode.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
