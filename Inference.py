@@ -1,11 +1,12 @@
-from typing import Generator
 import torch
 import torch.nn as nn
+from torchvision.transforms.functional import InterpolationMode
 from ESRGANplus import *
 from Models import *
 from torchvision import transforms, utils
 from PIL import Image
 import argparse
+import torchvision
 
 
 parser = argparse.ArgumentParser(description='PyTorch ESRGANplus')
@@ -27,15 +28,30 @@ opt = parser.parse_args()
 PATH = opt.modelpath
 imagepath = (opt.inferencepath + opt.imagename)
 image = Image.open(imagepath)
+imageLR = Image.open(imagepath)
 data_transforms = transforms.Compose([transforms.Resize((opt.hr_height, opt.hr_width)), transforms.ToTensor()])
-image = data_transforms(image).unsqueeze(0)
-utils.save_image(image,'../../results/ESRGANplus/LR_image.jpg')
-if(opt.gpu_mode):
+LRtransform = transforms.Compose([transforms.Resize((opt.hr_height * 4, opt.hr_width * 4)), transforms.ToTensor()])
+
+imageLR = LRtransform(imageLR)
+
+if opt.gpu_mode == False:
+    image = data_transforms(image).unsqueeze(0)
+
+if opt.gpu_mode:
     image = data_transforms(image).unsqueeze(0).cuda()
 
+utils.save_image(imageLR,'../../results/ESRGANplus/LR_image.jpg')
 hr_shape = (opt.hr_height, opt.hr_width)
 model=ESRGANplus(opt.channels, filters=opt.filters,hr_shape=hr_shape, n_resblock = opt.n_resblock, upsample = opt.upsample)
-model.load_state_dict(torch.load(PATH,map_location=('cpu')))
+
+if opt.gpu_mode == False:
+    device = torch.device('cpu')
+
+if opt.gpu_mode:
+    	device = torch.device('cuda:0')
+
+model.load_state_dict(torch.load(PATH,map_location=device))
+
 model.eval()
 
 out = model(image)
